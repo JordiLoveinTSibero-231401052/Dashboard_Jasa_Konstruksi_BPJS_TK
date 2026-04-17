@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Proyek Instansi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4Cg89l5mP9D5b6h5wF5y9+c4g1i9L+XwLz7L/G5eX7aX7Z4+0J5D95b6h5wF5y9+c4g1i9L+XwLz7L/G5eX7aX7Z4+0J5D95eY5M5z5n5z5x5w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <style>
+        :root {
+            /* Warna Dikembalikan seperti Semula */
+            --color-primary: #004c99; /* Biru BPJS */
+            --color-secondary: #0066cc; /* Biru Terang */
+            --color-accent: #28a745; /* Hijau */
+            --color-warning: #ffc107; /* Kuning (untuk highlight/warning) */
+            --color-error: #e74c3c; /* Merah (untuk error/belum terdaftar) */
+            --color-background: #f0f3f6; /* Abu-abu Muda */
+            --color-surface: #ffffff; /* Putih */
+            --color-text-dark: #333333;
+            --color-text-light: #ffffff;
+            --color-text-muted: #6c757d;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+            --font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --summary-col-width: 320px; /* Lebar Panel Kiri */
+        }
+
+        /* --- Global Reset & Body --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--color-background);
+            color: var(--color-text-dark);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden; 
+        }
+        
+        .container {
+            /* Container dibuat full width */
+            max-width: 100%; 
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 20px; 
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 25px;
+            margin-bottom: 15px;
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            border-top: 5px solid var(--color-primary);
+        }
+
+        header img {
+            /* Logo DIBESARKAN */
+            height: 60px; 
+            margin: 0 10px;
+        }
+        
+        h1 {
+            font-size: 2.1rem;
+            color: var(--color-primary);
+            font-weight: 700;
+            flex-grow: 1;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* --- Button & Link --- */
+        .back-button {
+            display: inline-block;
+            background-color: var(--color-secondary);
+            color: var(--color-text-light);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            width: fit-content;
+        }
+
+        .back-button:hover {
+            background-color: #005aa7; 
+            transform: translateY(-2px);
+        }
+
+        /* --- Panel Umum --- */
+        .panel {
+            background-color: var(--color-surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 0; 
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--color-primary);
+            border-bottom: 2px solid rgba(0, 76, 153, 0.1);
+            padding-bottom: 10px;
+        }
+
+        /* --- Layout Utama (2 Kolom) --- */
+        .dashboard-container {
+            height: calc(100vh - 205px); 
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dashboard-top.two-column {
+            flex: 1; 
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+            width: 100%;
+            overflow: hidden; 
+        }
+
+        .left-panel {
+            flex: 0 0 var(--summary-col-width); 
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .summary-section {
+            flex: 0 0 auto; 
+            padding-bottom: 10px;
+        }
+        
+        .right-panel {
+            flex: 1 1 auto; 
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Summary Cards --- */
+        .summary-section h2 { display: none; } 
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .card {
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: var(--box-shadow);
+            color: var(--color-text-light);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .card:hover { transform: translateY(-3px); }
+
+        .card h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .card .value {
+            font-size: 2.0rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .card .currency {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .card i.fa-solid {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 2.5rem;
+            opacity: 0.3;
+        }
+
+        .card.total-projects { background-color: var(--color-accent); }
+        .card.total-value { background-color: var(--color-primary); }
+        .card.avg-value { background-color: var(--color-secondary); }
+
+        /* --- Charts --- */
+        .charts-section {
+            flex: 1; 
+            display: flex;
+            flex-direction: column;
+            min-height: 250px;
+        }
+        .chart-container {
+            flex: 1;
+            height: 280px; 
+            min-height: 250px;
+            position: relative;
+        }
+
+        /* --- Table Actions & Search --- */
+        .table-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0 0 15px;
+            flex-wrap: wrap;
+            padding: 5px 0;
+            background: var(--color-surface);
+            z-index: 10;
+            position: relative;
+        }
+
+        .search-input {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0f3f6;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px 15px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+            width: clamp(240px, 50vw, 400px);
+        }
+
+        .search-input input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font: inherit;
+            color: var(--color-text-dark);
+            background: transparent;
+        }
+
+        .actions-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .apply-filter {
+            font-size: 0.9rem;
+            color: var(--color-text-muted);
+            user-select: none;
+        }
+        .rows-count {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--color-text-dark);
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        /* --- Table Styling --- */
+        .data-table-container {
+            flex: 1; 
+            padding: 20px;
+            overflow: hidden; 
+            display: flex;
+            flex-direction: column;
+        }
+        .data-table-container > h2 { margin: 0 0 10px; padding: 0 0 10px; }
+        
+        /* Area scroll khusus tabel */
+        .table-wrapper {
+            flex: 1 1 auto;
+            overflow-y: auto; /* SCROLL VERTICAL HANYA DI SINI */
+            overflow-x: hidden; /* SCROLL HORIZONTAL DIHILANGKAN */
+            min-height: 0; 
+            position: relative;
+            padding: 0 0 5px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.9rem;
+            min-width: 1200px; 
+            table-layout: fixed; 
+        }
+
+        .data-table thead th {
+            position: sticky;
+            top: 0; 
+            z-index: 50; 
+            background-color: var(--color-primary); 
+            color: var(--color-text-light); /* Header teks dijamin PUTIH */
+            font-weight: 600;
+            text-align: left;
+            padding: 12px 10px;
+            border-bottom: 3px solid #00366b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.8rem;
+            white-space: normal; 
+        }
+
+        .data-table tbody tr:nth-child(even) { background-color: #f7f9fa; }
+        .data-table tbody tr:hover { background-color: #eef4f9; }
+
+        .data-table th,
+        .data-table td {
+            padding: 10px 10px; 
+            vertical-align: top; 
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            word-wrap: break-word; 
+        }
+
+        /* Penyesuaian Lebar Kolom untuk 8 kolom (Index n - 1) */
+        
+        /* Kolom 1 (Kode RUP) - Index as 1 */
+        .data-table th:nth-child(1), .data-table td:nth-child(1) { width: 11%; min-width: 120px; } 
+        
+        /* Kolom 2 (Kode Tender) - Index as 2 */
+        .data-table th:nth-child(2), .data-table td:nth-child(2) { 
+            width: 11%; min-width: 120px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        } 
+        
+        /* Kolom 3 (Kode Proyek) - Index as 3 */
+        .data-table th:nth-child(3), .data-table td:nth-child(3) { width: 11%; min-width: 120px; } 
+        
+        /* Kolom 4 (Nama Proyek) - Index as 4 */
+        .data-table th:nth-child(4), .data-table td:nth-child(4) { width: 35%; min-width: 350px; } 
+        
+        /* Kolom 5 (Nama Pelaksana) - Index as 5 */
+        .data-table th:nth-child(5), .data-table td:nth-child(5) { width: 14%; min-width: 180px; } 
+        
+        /* Kolom 6 (Nilai Proyek) - Index as 6 */
+        .data-table th:nth-child(6) { 
+            color: var(--color-text-light); /* Header Nilai Proyek dijamin PUTIH */
+        } 
+        .data-table th:nth-child(6), .data-table td:nth-child(6) { 
+            width: 14%; min-width: 150px; text-align: right; font-weight: 600; 
+            color: var(--color-text-dark); /* Body Nilai Proyek diubah ke HITAM */
+            white-space: normal; 
+        } 
+        
+        /* Kolom 7 (Sumber Dana) - Index as 7 */
+        .data-table th:nth-child(7), .data-table td:nth-child(7) { width: 10%; min-width: 90px; white-space: normal; } 
+        
+        /* Kolom 8 (Status) - Index as 8 */
+        .data-table th:nth-child(8), .data-table td:nth-child(8) { width: 10%; min-width: 130px; text-align: center; white-space: normal; } 
+
+        
+        .project-link {
+            color: var(--color-primary);
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: 500;
+            display: -webkit-box;
+            -webkit-line-clamp: 4; 
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            line-height: 1.3;
+        }
+
+        /* Badge Status (Warna Asli) */
+        .status-badge {
+            padding: 6px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: #fff !important;
+            white-space: normal;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        .status-badge.status-belum {
+            min-width: 90px;
+            padding: 6px 8px;
+        }
+        .status-terdaftar { background-color: #2ecc71; } 
+        .status-belum { background-color: #e74c3c; } 
+        .status-unknown { background-color: #95a5a6; } 
+
+        
+        /* --- Responsiveness (Media Queries) --- */
+        @media (max-width: 1400px) {
+            .data-table {
+                min-width: 1200px; 
+            }
+            .table-wrapper {
+                overflow-x: auto; 
+            }
+        }
+
+        @media (max-width: 900px) {
+            body { overflow-y: auto !important; padding: 10px; }
+            .container { padding: 0; }
+            header { padding: 10px 15px; }
+            header img { height: 45px; } 
+            .dashboard-container {
+                height: auto !important;
+                overflow: visible !important;
+            }
+            .dashboard-top.two-column {
+                flex-direction: column;
+                overflow: visible !important;
+            }
+            .left-panel, .right-panel {
+                flex: 1 1 auto;
+                height: auto !important;
+            }
+            .charts-section { height: 350px; }
+            .table-wrapper {
+                max-height: 50vh; 
+                overflow-x: auto; 
+            }
+            .data-table { min-width: 850px; }
+            /* Kolom 4 (Nama Proyek) - Index 4 */
+            .data-table th:nth-child(4), .data-table td:nth-child(4) { min-width: 250px; width: 30%; }
+            /* Kolom 6 (Nilai Proyek) - Index 6 */
+            .data-table th:nth-child(6), .data-table td:nth-child(6) { min-width: 120px; }
+        }
+        
+        /* Override untuk sticky desktop view */
+        @media (min-width: 901px) {
+            body { overflow-y: hidden !important; }
+            .dashboard-container { height: calc(100vh - 200px) !important; }
+            .table-wrapper { overflow-y: auto !important; overflow-x: auto !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="medan.png" alt="Logo Kota Medan" class="header-logo">
+            <img src="pemprovsu.png" alt="Logo Provinsi Sumatera Utara" class="header-logo">
+            <h1>Detail Proyek <br><span id="instansiTitle"></span></h1>
+            <img src="logo.png" alt="Logo BPJS Ketenagakerjaan">
+        </header>
+
+        <a href="index.html" class="back-button">
+            <i class="fas fa-arrow-left" style="margin-right: 8px;"></i> Kembali ke Dashboard Utama
+        </a>
+
+        <div class="dashboard-container">
+            <div class="dashboard-top two-column">
+                <div class="left-panel">
+                    <div class="summary-section panel">
+                        <h2>Ringkasan Proyek</h2>
+                        <div class="summary-cards">
+                            <div class="card total-projects" style="background-color: var(--color-accent);">
+                                <i class="fa-solid fa-list-check"></i>
+                                <h3>Total Proyek</h3>
+                                <div class="value" id="totalProjects">0</div>
+                            </div>
+                            <div class="card total-value" style="background-color:var(--color-primary);">
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                                <h3>Total Nilai Proyek</h3>
+                                <div class="value currency" id="totalValue">Rp 0</div>
+                            </div>
+                            <div class="card avg-value" style="background-color: var(--color-secondary);">
+                                <i class="fa-solid fa-hand-holding-dollar"></i>
+                                <h3>Potensi Iuran</h3>
+                                <div class="value currency" id="potensiValue">Rp 0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-section panel">
+                        <h2><i class="fas fa-chart-bar" style="margin-right: 8px; color: var(--color-primary);"></i> Distribusi Status Potensi</h2>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="right-panel panel data-table-container">
+                    <h2><i class="fas fa-table" style="margin-right: 8px; color: var(--color-primary);"></i> Data Proyek Detail</h2>
+
+                    <div class="table-actions">
+                        <div class="search-input">
+                            <i class="fas fa-magnifying-glass" style="color: var(--color-text-muted);"></i>
+                            <input id="tableSearch" type="text"
+                                placeholder="Cari proyek, kode, pelaksana, atau status..." />
+                        </div>
+
+                        <div class="actions-right">
+                            <label class="apply-filter">
+                                <input type="checkbox" id="applyToCharts" />
+                                Terapkan filter ke ringkasan & grafik
+                            </label>
+                            <span id="rowsCount" class="rows-count">Menampilkan 0 dari 0</span>
+                        </div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="data-table" id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th>Kode RUP</th>
+                                    <th>Kode Tender</th>
+                                    <th>Kode Proyek</th>
+                                    <th>Nama Proyek</th>
+                                    <th>Nama Pelaksana Proyek</th>
+                                    <th>Nilai Proyek</th>
+                                    <th>Sumber Dana</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+// ======================== GLOBAL VARIABLES & CONFIG ========================
+let originalDetailData = []; // Data awal yang sudah difilter berdasarkan URL
+let searchInitialized = false;
+let statusChart = null;
+let currentInstansi = null;
+let currentStatusParam = null;
+
+// Menggunakan konfigurasi Google Sheets yang Anda sediakan
+const SHEET_CONFIG = {
+    sheetId: "1h9NVeC4Gca7IwQkuLd3kNSqaO4xLbgCBIMQK7I26HGs",
+    apiKey: "AIzaSyDDChj-Syqytv2HboLnbflQu7-u_5VAYIE",
+    range: "A2:M1000"
+};
+
+// ======================== CURRENCY HELPERS ========================
+function cleanCurrencyValue(value) {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+        const cleaned = value.replace(/[^\d.-]/g, '');
+        const parsed = parseFloat(cleaned) || 0;
+        return parsed;
+    }
+    return 0;
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
+function computePotensiIuran(amount){
+    const tiers = [
+        { cap: 100_000_000, rate: 0.0024 },
+        { cap: 500_000_000, rate: 0.0019 },
+        { cap: 1_000_000_000, rate: 0.0015 },
+        { cap: 5_000_000_000, rate: 0.0012 },
+        { cap: Infinity, rate: 0.0010 }
+    ];
+
+    let premi = 0;
+    let prevCap = 0;
+
+    for (const t of tiers){
+        const usable = Math.max(0, Math.min(amount, t.cap) - prevCap);
+        if (usable <= 0) { prevCap = t.cap; continue; }
+        premi += usable * t.rate;
+        prevCap = t.cap;
+        if (prevCap >= amount) break;
+    }
+    return premi;
+}
+
+// ======================== NORMALISASI STATUS YANG DIPERBAIKI ========================
+function normalizeMapStatus(s) {
+    if (!s || s === '') return 'Tidak Diketahui';
+    
+    const x = String(s)
+        .normalize('NFKC')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, ' ')
+        .replace(/_/g, ' ');
+
+    // LOGIKA YANG LEBIH LUAS UNTUK "BELUM TERDAFTAR"
+    if (x.includes('BELUM') || 
+        x.includes('TL') || 
+        x === 'VALID' || 
+        x === 'TIDAK_VALID' ||
+        x === 'TIDAK VALID' ||
+        x.includes('TIDAK') ||
+        x === 'BLM' ||
+        x.includes('BLM')) {
+        return 'Belum Terdaftar';
+    }
+    
+    if (x.includes('TERDAFTAR') && !x.includes('BELUM')) {
+        return 'Terdaftar';
+    }
+    
+    if (x.includes('BATAL') || x.includes('DIBATALKAN')) {
+        return 'Batal';
+    }
+    
+    return x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
+}
+
+function projectStatusToCanonical(project) {
+    let raw = String(project.statusPotensi || '').toUpperCase().trim();
+    raw = raw.replace(/\s+/g, ' ').replace(/_/g, ' ');
+    
+    // LOGIKA YANG LEBIH LUAS
+    if (raw.includes('BELUM') || 
+        raw.includes('TL') || 
+        raw === 'VALID' || 
+        raw === 'TIDAK_VALID' ||
+        raw === 'TIDAK VALID' ||
+        raw.includes('TIDAK') ||
+        raw === 'BLM' ||
+        raw.includes('BLM')) {
+        return 'belum';
+    }
+    
+    if (raw.includes('TERDAFTAR') && !raw.includes('BELUM')) {
+        return 'terdaftar';
+    }
+    
+    if (raw.includes('BATAL') || raw.includes('DIBATALKAN')) {
+        return 'batal';
+    }
+    
+    return raw.toLowerCase();
+}
+
+function mapStatusParamToCanonical(param) {
+    if (!param) return null;
+    const p = String(param).toLowerCase().trim();
+    
+    // LOGIKA YANG LEBIH LUAS
+    if (p.includes('belum') || 
+        p.includes('tl') || 
+        p === 'valid' || 
+        p.includes('tidak') ||
+        p === 'blm') {
+        return 'belum';
+    }
+    
+    if (p.includes('terdaftar') && !p.includes('belum')) {
+        return 'terdaftar';
+    }
+    
+    if (p.includes('batal')) {
+        return 'batal';
+    }
+    
+    return null;
+}
+
+// ======================== FETCH DATA FROM GOOGLE SHEETS ========================
+async function fetchGoogleSheetsData() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_CONFIG.sheetId}/values/${SHEET_CONFIG.range}?key=${SHEET_CONFIG.apiKey}`;
+    
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const result = await response.json();
+        if (!result.values || result.values.length === 0) return [];
+        
+        const headers = [
+            'NO', 'KODE RUP', 'KODE TENDER', 'KODE PROYEK', 'NAMA PROYEK',
+            'NILAI PROYEK', 'SUMBER DANA', 'NAMA PEMILIK', 'NAMA INSTANSI', 'NAMA PELAKSANA',
+            'SUMBER POTENSI', 'STATUS POTENSI', 'TGL SPMK'
+        ];
+        
+        const data = result.values.map((row, index) => {
+            const rowData = {};
+            headers.forEach((header, colIndex) => {
+                rowData[header] = row[colIndex] || '';
+            });
+            return {
+                no: rowData['NO'] || (index + 1).toString(),
+                kodeRup: rowData['KODE RUP'] || '',
+                kodeTender: rowData['KODE TENDER'] || '',
+                kodeProyek: rowData['KODE PROYEK'] || '',
+                namaProyek: rowData['NAMA PROYEK'] || '',
+                nilaiProyek: cleanCurrencyValue(rowData['NILAI PROYEK'] || '0'),
+                sumberDana: rowData['SUMBER DANA'] || 'Tidak Diketahui',
+                namaPemilik: rowData['NAMA PEMILIK'] || 'Tidak Diketahui',
+                namaInstansi: rowData['NAMA INSTANSI'] || 'Tidak Diketahui',
+                namaPelaksana: rowData['NAMA PELAKSANA'] || '',
+                sumberPotensi: rowData['SUMBER POTENSI'] || '',
+                statusPotensi: rowData['STATUS POTENSI'] || 'Tidak Diketahui',
+                tglSpmk: rowData['TGL SPMK'] || ''
+            };
+        });
+        
+        return data.filter(item => item.namaProyek && item.namaProyek.trim() !== '');
+        
+    } catch (error) {
+        console.error("❌ Error fetching Google Sheets data:", error);
+        throw error;
+    }
+}
+
+// ======================== FILTER UTILITIES YANG DIPERBAIKI ========================
+function filterByInstansiName(data, instansi) {
+    if (!instansi) return data.slice();
+    
+    console.log(`🔍 Filtering by instansi: "${instansi}"`);
+    
+    const filtered = data.filter(p => {
+        const instansiName = (p.namaInstansi || '').toLowerCase().trim();
+        const targetInstansi = instansi.toLowerCase().trim();
+        
+        // LOGIKA FILTER YANG LEBIH FLEKSIBEL
+        const match = instansiName.includes(targetInstansi) || 
+                     targetInstansi.includes(instansiName) ||
+                     instansiName.replace(/[^a-z0-9]/g, '') === targetInstansi.replace(/[^a-z0-9]/g, '') ||
+                     instansiName.split(' ').some(word => targetInstansi.includes(word)) ||
+                     targetInstansi.split(' ').some(word => instansiName.includes(word));
+        
+        return match;
+    });
+    
+    console.log(`📊 Found ${filtered.length} records for instansi "${instansi}"`);
+    return filtered;
+}
+
+function filterByStatusCanonical(data, statusParam) {
+    const target = mapStatusParamToCanonical(statusParam);
+    if (!target) return data.slice();
+    
+    console.log(`🔍 Filtering by status: "${statusParam}" -> "${target}"`);
+    
+    const filtered = data.filter(p => {
+        const projectStatus = projectStatusToCanonical(p);
+        return projectStatus === target;
+    });
+    
+    console.log(`📊 Found ${filtered.length} records with status "${target}"`);
+    return filtered;
+}
+
+// ======================== VALIDASI DATA ========================
+function validateData(data, instansi = null, status = null) {
+    console.log("=== 📊 DATA VALIDATION ===");
+    console.log("Total records:", data.length);
+    
+    const instansiCounts = {};
+    const statusCounts = {};
+    const rawStatusCounts = {};
+    
+    data.forEach(item => {
+        const instansiName = item.namaInstansi || 'Unknown';
+        const rawStatus = item.statusPotensi || 'Unknown';
+        const normalizedStatus = normalizeMapStatus(rawStatus);
+        
+        instansiCounts[instansiName] = (instansiCounts[instansiName] || 0) + 1;
+        statusCounts[normalizedStatus] = (statusCounts[normalizedStatus] || 0) + 1;
+        rawStatusCounts[rawStatus] = (rawStatusCounts[rawStatus] || 0) + 1;
+    });
+    
+    console.log("Instansi distribution:", instansiCounts);
+    console.log("Normalized status distribution:", statusCounts);
+    console.log("Raw status distribution:", rawStatusCounts);
+    
+    if (instansi) {
+        console.log(`📈 For instansi "${instansi}":`, instansiCounts[instansi] || 0);
+    }
+    
+    if (status) {
+        const targetStatus = mapStatusParamToCanonical(status);
+        console.log(`📈 For status "${status}" (${targetStatus}):`, statusCounts[targetStatus] || 0);
+    }
+    
+    return { instansiCounts, statusCounts, rawStatusCounts };
+}
+
+// ======================== SUMMARY CARDS ========================
+function updateSummaryCards(data) {
+    const totalProjects = data.length;
+    const totalValue = data.reduce((sum, p) => sum + (p.nilaiProyek || 0), 0);
+    const potensi = computePotensiIuran(totalValue); 
+
+    const elTotal = document.getElementById('totalProjects');
+    const elTotalValue = document.getElementById('totalValue');
+    const elPotensi = document.getElementById('potensiValue');
+
+    if (elTotal) elTotal.textContent = totalProjects.toLocaleString('id-ID');
+    if (elTotalValue) elTotalValue.textContent = formatCurrency(totalValue);
+    if (elPotensi) elPotensi.textContent = formatCurrency(potensi);
+}
+
+// ======================== CHARTS ========================
+function updateCharts(data) {
+    updateStatusChart(data);
+}
+
+function updateStatusChart(data) {
+    const statusCounts = {};
+    const statusPotensi = {};
+
+    data.forEach((project) => {
+        const statusFinal = normalizeMapStatus(project.statusPotensi);
+        const nilai = Number(project.nilaiProyek) || 0;
+        const pot = computePotensiIuran(nilai);
+
+        statusCounts[statusFinal] = (statusCounts[statusFinal] || 0) + 1;
+        statusPotensi[statusFinal] = (statusPotensi[statusFinal] || 0) + pot;
+    });
+
+    const colorMap = {
+        'terdaftar': '#2ecc71',
+        'belum terdaftar': '#e74c3c',
+        'batal': '#95a5a6'
+    };
+
+    const rawLabels = Object.keys(statusCounts);
+    const displayLabels = rawLabels.map((l) => l === 'Terdaftar' ? 'Terdaftar' : l);
+    const values = rawLabels.map((l) => statusCounts[l] || 0);
+    const colors = rawLabels.map((l) => colorMap[l.toLowerCase()] || '#95a5a6');
+    const potensiValues = rawLabels.map((l) => statusPotensi[l] || 0);
+    const totalPotensiAll = potensiValues.reduce((a, b) => a + b, 0);
+
+    if (statusChart) statusChart.destroy();
+
+    const ctx = document.getElementById('statusChart').getContext('2d');
+    statusChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+        labels: displayLabels,
+        datasets: [
+            {
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 5, 
+            hoverBackgroundColor: colors.map(c => c + 'cc'),
+            },
+        ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y', 
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function (ctx) {
+                        const idx = ctx.dataIndex;
+                        const count = ctx.raw;
+                        const pot = potensiValues[idx] || 0;
+                        const pct = totalPotensiAll ? (pot / totalPotensiAll) * 100 : 0;
+
+                        return [
+                            `${displayLabels[idx]}: ${count.toLocaleString('id-ID')} proyek`,
+                            `Potensi iuran: ${formatCurrency(pot)} (${pct.toFixed(1)}%)`,
+                        ];
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { precision: 0 } },
+                y: { grid: { color: 'rgba(0,0,0,0.05)' } }
+            }
+        },
+    });
+}
+
+// ======================== RENDER DETAIL TABLE ========================
+function updateDetailTable(data) {
+    const tableBody = document.getElementById('tableBody');
+    tableBody.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="8" style="text-align:center; color:#666; padding:18px; border-bottom: none;">
+            <i class="fas fa-box-open" style="margin-right: 8px;"></i> Tidak ada data yang cocok dengan pencarian.
+        </td>`;
+        tableBody.appendChild(row);
+        return;
+    }
+
+    data.forEach((project, idx) => { 
+        const row = document.createElement('tr');
+        const statusLabel = normalizeMapStatus(project.statusPotensi);
+        const statusCanonical = projectStatusToCanonical(project);
+        
+        let bg;
+        let displayText;
+        if (statusLabel === 'Terdaftar') {
+            bg = '#2ecc71'; 
+            displayText = 'TERDAFTAR';
+        } else if (statusLabel === 'Belum Terdaftar') {
+            bg = '#e74c3c'; 
+            displayText = 'BELUM<br>TERDAFTAR'; 
+        } else {
+            bg = '#95a5a6'; 
+            displayText = statusLabel.toUpperCase();
+        }
+
+        const statusBadgeHtml = `
+            <span class="status-badge status-${statusCanonical}" style="background:${bg} !important;">
+                ${displayText}
+            </span>
+        `;
+        
+        const safeName = escapeHtml(project.namaProyek);
+        const encodedNama = encodeURIComponent(project.namaProyek || '');
+        const encodedInstansi = encodeURIComponent(project.namaInstansi || '');
+
+        row.innerHTML = `
+            <td>${project.kodeRup || '-'}</td>
+            <td>${project.kodeTender || '-'}</td>
+            <td>${project.kodeProyek || '-'}</td>
+            <td>
+                <span class="project-link" 
+                    data-proyek="${encodedNama}"
+                    data-status="${statusCanonical}"
+                    data-instansi="${encodedInstansi}"
+                    >${safeName}</span>
+            </td>
+            <td>${project.namaPelaksana || 'Tidak diketahui'}</td>
+            <td style="text-align:right; font-weight:600;">
+                ${formatCurrency(project.nilaiProyek)}
+            </td>
+            <td>${project.sumberDana || '-'}</td>
+            <td style="text-align:center;">${statusBadgeHtml}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// ======================== SEARCH SETUP & DEBOUNCE ========================
+function setupTableSearch() {
+    const input = document.getElementById('tableSearch');
+    const applyBox = document.getElementById('applyToCharts');
+    
+    if (!input) {
+        updateRowsCount(originalDetailData.length, originalDetailData.length);
+        return;
+    }
+
+    if (searchInitialized) {
+        runFilter(); 
+        return;
+    }
+    
+    searchInitialized = true;
+
+    const runFilter = () => {
+        const q = (input.value || '').trim().toLowerCase();
+        let filtered = originalDetailData.slice();
+
+        if (q) {
+            const tokens = q.split(/\s+/);
+            filtered = filtered.filter(p => {
+                const hay = [
+                    p.kodeRup, p.kodeTender, p.kodeProyek,
+                    p.namaProyek, p.namaPelaksana,
+                    p.sumberDana, p.statusPotensi
+                ].join(' ').toLowerCase();
+                return tokens.every(t => hay.includes(t));
+            });
+        }
+
+        updateDetailTable(filtered);
+        updateRowsCount(filtered.length, originalDetailData.length);
+
+        if (applyBox?.checked) {
+            updateSummaryCards(filtered);
+            updateCharts(filtered);
+        } else {
+            updateSummaryCards(originalDetailData);
+            updateCharts(originalDetailData);
+        }
+    };
+
+    input.addEventListener('input', debounce(runFilter, 200));
+    applyBox?.addEventListener('change', runFilter);
+
+    runFilter();
+}
+
+function debounce(fn, delay = 300) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn.apply(null, args), delay);
+    };
+}
+
+function updateRowsCount(showing, total) {
+    const el = document.getElementById('rowsCount');
+    const totalDisp = total.toLocaleString('id-ID');
+    if (el) el.textContent = `Menampilkan ${showing.toLocaleString('id-ID')} dari ${totalDisp}`;
+}
+
+// ======================== SMALL HELPERS ========================
+function escapeHtml(t) {
+    return String(t || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+// ======================== MAIN INIT & EVENT LISTENERS ========================
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    currentInstansi = urlParams.get('instansi');
+    currentStatusParam = urlParams.get('status');
+
+    const canonicalStatusLabel = mapStatusParamToCanonical(currentStatusParam);
+    const displayTitle = currentInstansi || (canonicalStatusLabel ? `Proyek Status ${canonicalStatusLabel}` : 'Detail Proyek');
+
+    document.getElementById('instansiTitle').textContent = displayTitle;
+    document.title = `Detail Proyek - ${displayTitle}`;
+
+    // LOG PARAMETERS
+    console.log("🔗 URL Parameters:", {
+        instansi: currentInstansi,
+        status: currentStatusParam,
+        canonicalStatus: canonicalStatusLabel
+    });
+
+    try {
+        showLoading(true);
+        const allData = await fetchGoogleSheetsData();
+        
+        console.log("📥 Total data fetched from Google Sheets:", allData.length);
+        
+        // VALIDASI DATA SEBELUM FILTER
+        validateData(allData, currentInstansi, currentStatusParam);
+        
+        let filtered = allData.slice();
+        
+        // Terapkan filter dari URL (Instansi dan Status)
+        if (currentInstansi) {
+            filtered = filterByInstansiName(filtered, currentInstansi);
+        }
+        if (currentStatusParam) {
+            filtered = filterByStatusCanonical(filtered, currentStatusParam);
+        }
+
+        // VALIDASI DATA SETELAH FILTER
+        console.log("✅ Final filtered data:", filtered.length);
+        validateData(filtered, currentInstansi, currentStatusParam);
+
+        // Simpan data yang sudah difilter dari URL ke originalDetailData
+        originalDetailData = filtered;
+
+        // Inisialisasi tampilan awal dengan data yang sudah difilter URL
+        updateSummaryCards(originalDetailData);
+        updateCharts(originalDetailData);
+        setupTableSearch();
+        
+    } catch (error) {
+        console.error("❌ Error loading data:", error);
+        showError("Gagal memuat data dari Google Sheets. Silakan coba lagi.");
+    } finally {
+        showLoading(false);
+    }
+});
+
+// Event listener for project name click
+document.getElementById('tableBody')?.addEventListener('click', (e) => {
+    const anchor = e.target.closest('.project-link');
+    if (!anchor) return;
+    
+    const namaEncoded = anchor.dataset.proyek || '';
+    const nama = decodeURIComponent(namaEncoded);
+    const status = (anchor.dataset.status || '').toLowerCase();
+    const instansi = decodeURIComponent(anchor.dataset.instansi || '');
+
+    const subset = originalDetailData.filter(p => (p.namaProyek || '').toLowerCase() === nama.toLowerCase());
+    
+    updateSummaryCards(subset);
+    if (document.getElementById('applyToCharts')?.checked) {
+        updateCharts(subset);
+    }
+    
+    document.getElementById('rowsCount').textContent = `Menampilkan ${subset.length.toLocaleString('id-ID')} dari ${originalDetailData.length.toLocaleString('id-ID')} • Ringkasan: ${nama}`;
+    e.preventDefault();
+});
+
+// ======================== LOADER & ERROR UI ========================
+function showLoading(show) {
+    let loader = document.getElementById('loadingIndicator');
+    const targetName = currentInstansi || 'Data Proyek';
+    if (show) {
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'loadingIndicator';
+            loader.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px 40px; border-radius: 12px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                        <div style="border: 4px solid #f3f3f3; border-top: 4px solid var(--color-primary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 15px;"></div>
+                        <p style="font-weight: 500; color: var(--color-primary);">Memuat data untuk ${targetName}...</p>
+                    </div>
+                </div>
+                <style>
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                </style>
+            `;
+            document.body.appendChild(loader);
+        }
+        loader.style.display = 'block';
+    } else if (loader) {
+        loader.style.display = 'none';
+    }
+}
+
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.innerHTML = `
+        <div style="position: fixed; top: 20px; right: 20px; background: var(--color-error); color: white; padding: 15px; border-radius: 8px; z-index: 10000; max-width: 300px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <strong><i class="fas fa-triangle-exclamation"></i> Error:</strong> ${message}
+            <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; color: white; font-size: 18px; cursor: pointer; margin-left: 10px;">&times;</button>
+        </div>
+    `;
+    document.body.appendChild(errorDiv);
+    
+    setTimeout(() => {
+        if (errorDiv.parentElement) {
+            errorDiv.remove();
+        }
+    }, 5000);
+}
+    </script>
+</body>
+</html>

@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Potensi Jasa Konstruksi — KC Medan Kota</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ===================== DESIGN TOKENS ===================== */
+        :root {
+            --blue-900: #0a1e44;
+            --blue-800: #0d2a5e;
+            --blue-700: #0f3572;
+            --blue-600: #1650a8;
+            --blue-500: #1d63cc;
+            --blue-400: #3b82f6;
+            --blue-300: #93c5fd;
+            --cyan:     #06b6d4;
+            --cyan-light: #e0f7fb;
+            --green:    #10b981;
+            --green-light: #d1fae5;
+            --amber:    #f59e0b;
+            --amber-light: #fef3c7;
+            --red:      #ef4444;
+            --red-light: #fee2e2;
+
+            --bg:       #f0f4f9;
+            --surface:  #ffffff;
+            --surface-2:#f8fafc;
+            --border:   #e2e8f0;
+            --text-1:   #0f172a;
+            --text-2:   #475569;
+            --text-3:   #94a3b8;
+
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+            --shadow-lg: 0 10px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+            --radius:    12px;
+            --radius-sm: 8px;
+            --radius-lg: 16px;
+
+            --font: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'DM Mono', monospace;
+
+            --nav-h: 64px;
+        }
+
+        /* ===================== RESET ===================== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text-1);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        a { text-decoration: none; color: inherit; }
+
+        /* ===================== TOPNAV ===================== */
+        .topnav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            height: var(--nav-h);
+            background: var(--blue-900);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 0 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .nav-brand-logos {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-brand-logos img {
+            height: 36px;
+            width: auto;
+            border-radius: 6px;
+            object-fit: contain;
+        }
+
+        .nav-brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .nav-brand-text .title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            letter-spacing: 0.01em;
+        }
+
+        .nav-brand-text .subtitle {
+            font-size: 0.65rem;
+            color: var(--blue-300);
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        .nav-divider {
+            width: 1px;
+            height: 28px;
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--blue-300);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+        }
+
+        .nav-link.active {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .nav-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 0 3px rgba(16,185,129,0.2); }
+            50% { box-shadow: 0 0 0 5px rgba(16,185,129,0.1); }
+        }
+
+        .status-dot.loading { background: var(--amber); box-shadow: 0 0 0 3px rgba(245,158,11,0.2); animation: none; }
+        .status-dot.error { background: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,0.2); animation: none; }
+
+        .status-text {
+            font-size: 0.72rem;
+            font-weight: 500;
+            color: var(--blue-300);
+            font-family: var(--font-mono);
+        }
+
+        .nav-timestamp {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+            font-family: var(--font-mono);
+            white-space: nowrap;
+        }
+
+        .btn-refresh {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font);
+        }
+
+        .btn-refresh:hover {
+            background: rgba(255,255,255,0.14);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .btn-refresh svg { transition: transform 0.4s ease; }
+        .btn-refresh:hover svg { transform: rotate(180deg); }
+
+        .nav-right-logos img {
+            height: 28px;
+            border-radius: 4px;
+            object-fit: contain;
+        }
+
+        /* ===================== SUBHEADER ===================== */
+        .subheader {
+            background: var(--blue-800);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .subheader-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.01em;
+        }
+
+        .subheader-title span {
+            color: var(--cyan);
+        }
+
+        .subheader-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(6,182,212,0.12);
+            border: 1px solid rgba(6,182,212,0.25);
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--cyan);
+        }
+
+        /* ===================== MAIN LAYOUT ===================== */
+        .main {
+            padding: 20px 24px;
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        /* ===================== SUMMARY CARDS ===================== */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+
+        .kpi-card.kpi-green::before { background: linear-gradient(90deg, var(--green), #34d399); }
+        .kpi-card.kpi-blue::before  { background: linear-gradient(90deg, var(--blue-500), var(--blue-400)); }
+        .kpi-card.kpi-cyan::before  { background: linear-gradient(90deg, var(--cyan), #67e8f9); }
+
+        .kpi-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .kpi-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .kpi-green .kpi-icon  { background: var(--green-light); }
+        .kpi-blue  .kpi-icon  { background: #dbeafe; }
+        .kpi-cyan  .kpi-icon  { background: var(--cyan-light); }
+
+        .kpi-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .kpi-trend.up { background: var(--green-light); color: #065f46; }
+
+        .kpi-label {
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-3);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--text-1);
+            line-height: 1;
+            letter-spacing: -0.03em;
+            font-family: var(--font);
+        }
+
+        .kpi-value.mono {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .kpi-sub {
+            font-size: 0.72rem;
+            color: var(--text-3);
+            margin-top: 4px;
+        }
+
+        /* ===================== CONTENT GRID ===================== */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* ===================== PANEL ===================== */
+        .panel {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .panel-badge {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: #dbeafe;
+            color: var(--blue-600);
+        }
+
+        .panel-body {
+            padding: 18px 20px;
+        }
+
+        /* ===================== CHARTS ===================== */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-panel { /* already has .panel */ }
+
+        .chart-inner {
+            display: flex;
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .chart-canvas-wrap {
+            flex: 1;
+            min-width: 0;
+            height: 220px;
+            position: relative;
+        }
+
+        .chart-legend-col {
+            width: 160px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+            max-height: 220px;
+        }
+
+        .legend-item {
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+
+        .legend-item:hover {
+            border-color: var(--blue-400);
+            transform: translateX(2px);
+        }
+
+        .legend-item.red-accent  { border-left: 3px solid var(--red); }
+        .legend-item.blue-accent { border-left: 3px solid var(--blue-500); }
+        .legend-item.cyan-accent { border-left: 3px solid var(--cyan); }
+        .legend-item.green-accent{ border-left: 3px solid var(--green); }
+        .legend-item.amber-accent{ border-left: 3px solid var(--amber); }
+
+        .legend-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-1);
+            margin-bottom: 3px;
+        }
+
+        .legend-count {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-1);
+        }
+
+        .legend-iuran {
+            font-size: 0.66rem;
+            color: var(--text-2);
+            font-family: var(--font-mono);
+        }
+
+        .legend-pct {
+            font-size: 0.66rem;
+            color: var(--text-3);
+        }
+
+        /* ===================== TABLE PANEL ===================== */
+        .table-scroll {
+            overflow-y: auto;
+            max-height: 480px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--blue-900);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 10px 14px;
+            text-align: left;
+            white-space: nowrap;
+            border-bottom: 2px solid var(--blue-700);
+        }
+
+        .data-table thead th:first-child { text-align: center; width: 48px; }
+        .data-table thead th:last-child  { text-align: center; width: 80px; }
+
+        .data-table tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s ease;
+        }
+
+        .data-table tbody tr:hover { background: #f0f7ff; }
+        .data-table tbody tr:nth-child(even) { background: var(--surface-2); }
+        .data-table tbody tr:nth-child(even):hover { background: #f0f7ff; }
+
+        .data-table td {
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+        }
+
+        .data-table td:first-child {
+            text-align: center;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            color: var(--text-3);
+            font-weight: 600;
+        }
+
+        .data-table td:last-child { text-align: center; }
+
+        .instansi-name {
+            font-weight: 600;
+            color: var(--blue-700);
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 240px;
+            transition: color 0.15s;
+        }
+
+        .instansi-name:hover { color: var(--blue-500); }
+
+        .instansi-value {
+            font-size: 0.7rem;
+            color: var(--text-3);
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+
+        .badge-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: var(--blue-700);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        /* ===================== FOOTER ===================== */
+        .site-footer {
+            background: var(--blue-900);
+            margin-top: 24px;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: var(--green);
+            color: #fff;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .footer-link:hover { background: #059669; transform: translateY(-1px); }
+
+        .footer-copy {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.45);
+        }
+
+        .footer-logos {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .footer-logos img {
+            height: 28px;
+            border-radius: 4px;
+            opacity: 0.7;
+            object-fit: contain;
+        }
+
+        /* ===================== LOADING SKELETON ===================== */
+        .skeleton {
+            background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .loading-row td { padding: 12px 14px; }
+
+        /* ===================== ANIMATE IN ===================== */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(12px);
+            animation: fadeUp 0.4s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-up:nth-child(1) { animation-delay: 0.05s; }
+        .fade-up:nth-child(2) { animation-delay: 0.1s; }
+        .fade-up:nth-child(3) { animation-delay: 0.15s; }
+
+        /* ===================== SCROLLBAR ===================== */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ===================== RESPONSIVE ===================== */
+        @media (max-width: 1100px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-inner {
+                flex-direction: column;
+            }
+
+            .chart-legend-col {
+                width: 100%;
+                flex-direction: row;
+                flex-wrap: wrap;
+                max-height: none;
+            }
+
+            .legend-item {
+                flex: 1 1 calc(50% - 6px);
+                min-width: 140px;
+            }
+        }
+
+        @media (max-width: 680px) {
+            :root { --nav-h: 56px; }
+
+            .main { padding: 14px 16px; }
+
+            .summary-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .topnav {
+                padding: 0 16px;
+                gap: 10px;
+            }
+
+            .nav-timestamp { display: none; }
+
+            .subheader { padding: 8px 16px; }
+
+            .nav-brand-text .subtitle { display: none; }
+
+            .kpi-value { font-size: 1.3rem; }
+            .kpi-value.mono { font-size: 1rem; }
+
+            .chart-canvas-wrap { height: 180px; }
+        }
+
+        @media (max-width: 420px) {
+            .nav-right-logos { display: none; }
+            .subheader-badge { display: none; }
+
+            .legend-item {
+                flex: 1 1 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===================== TOP NAV ===================== -->
+<nav class="topnav">
+    <div class="nav-brand">
+        <div class="nav-brand-logos">
+            <img src="medan.png" alt="Kota Medan" onerror="this.style.display='none'">
+            <img src="pemprovsu.png" alt="Pemprovsu" onerror="this.style.display='none'">
+        </div>
+        <div class="nav-divider"></div>
+        <div class="nav-brand-text">
+            <span class="title">BPJS Ketenagakerjaan</span>
+            <span class="subtitle">KC Medan Kota · Jasa Konstruksi</span>
+        </div>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-links">
+        <a href="index.html" class="nav-link active">🏠 Home</a>
+        <a href="topworst.html" class="nav-link">📊 Top &amp; Worst</a>
+    </div>
+
+    <div class="nav-right">
+        <div class="nav-status">
+            <div class="status-dot loading" id="statusDot"></div>
+            <span class="status-text" id="statusText">Memuat...</span>
+        </div>
+
+        <span class="nav-timestamp" id="navTimestamp"></span>
+
+        <button class="btn-refresh" id="btnRefresh">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>
+            Refresh
+        </button>
+
+        <div class="nav-right-logos">
+            <img src="mdnsemua.png" alt="Medan Untuk Semua" onerror="this.style.display='none'">
+            <img src="logo.png" alt="BPJS" onerror="this.style.display='none'">
+            <img src="sumut-berkah.png" alt="Sumut Berkah" onerror="this.style.display='none'">
+        </div>
+    </div>
+</nav>
+
+<!-- ===================== SUBHEADER ===================== -->
+<div class="subheader">
+    <h1 class="subheader-title">Dashboard Potensi <span>Jasa Konstruksi</span> — Kantor Cabang Medan Kota</h1>
+    <span class="subheader-badge">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Sumber Data: LKPP
+    </span>
+</div>
+
+<!-- ===================== MAIN ===================== -->
+<main class="main">
+
+    <!-- KPI ROW -->
+    <div class="summary-row">
+        <div class="kpi-card kpi-green fade-up">
+            <div class="kpi-top">
+                <div class="kpi-icon">🏗️</div>
+                <span class="kpi-trend up">▲ Live</span>
+            </div>
+            <div class="kpi-label">Total Proyek</div>
+            <div class="kpi-value" id="totalProjects">—</div>
+            <div class="kpi-sub">Proyek terdaftar aktif</div>
+        </div>
+        <div class="kpi-card kpi-blue fade-up">
+            <div class="kpi-top">
+                <div class="kpi-icon">💰</div>
+                <span class="kpi-trend up">▲ LKPP</span>
+            </div>
+            <div class="kpi-label">Total Nilai Proyek</div>
+            <div class="kpi-value mono" id="totalValue">—</div>
+            <div class="kpi-sub">Akumulasi seluruh proyek</div>
+        </div>
+        <div class="kpi-card kpi-cyan fade-up">
+            <div class="kpi-top">
+                <div class="kpi-icon">🎯</div>
+                <span class="kpi-trend up">▲ Target</span>
+            </div>
+            <div class="kpi-label">Potensi Iuran</div>
+            <div class="kpi-value mono" id="potensiValue">—</div>
+            <div class="kpi-sub">Estimasi iuran keseluruhan</div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content-grid">
+
+        <!-- LEFT COL: Charts -->
+        <div class="left-col">
+            <div class="charts-row">
+
+                <!-- Chart Status -->
+                <div class="panel chart-panel fade-up">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-dot" style="background:var(--blue-500)"></span>
+                            Status Potensi
+                        </span>
+                        <span class="panel-badge" id="statusBadge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-inner">
+                            <div class="chart-canvas-wrap">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                            <div class="chart-legend-col" id="statusLegend"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Sumber Dana -->
+                <div class="panel chart-panel fade-up">
+                    <div class="panel-header">
+                        <span class="panel-title">
+                            <span class="panel-title-dot" style="background:var(--cyan)"></span>
+                            Sumber Dana
+                        </span>
+                        <span class="panel-badge" id="danaBadge">—</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-inner">
+                            <div class="chart-canvas-wrap">
+                                <canvas id="sumberDanaChart"></canvas>
+                            </div>
+                            <div class="chart-legend-col" id="danaLegend"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /charts-row -->
+        </div><!-- /left-col -->
+
+        <!-- RIGHT COL: Table -->
+        <div class="panel fade-up" style="animation-delay:0.2s">
+            <div class="panel-header">
+                <span class="panel-title">
+                    <span class="panel-title-dot" style="background:var(--green)"></span>
+                    Pemilik Proyek
+                </span>
+                <span class="panel-badge" id="tableBadge">—</span>
+            </div>
+            <div class="table-scroll">
+                <table class="data-table" id="mainDataTable">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Instansi / Satker</th>
+                            <th style="text-align:center;">Proyek</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mainTableBody">
+                        <tr class="loading-row">
+                            <td colspan="3">
+                                <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
+                                    <div class="skeleton" style="height:14px;width:100%"></div>
+                                    <div class="skeleton" style="height:14px;width:85%"></div>
+                                    <div class="skeleton" style="height:14px;width:90%"></div>
+                                    <div class="skeleton" style="height:14px;width:75%"></div>
+                                    <div class="skeleton" style="height:14px;width:80%"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div><!-- /content-grid -->
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="site-footer">
+    <a href="https://docs.google.com/spreadsheets/d/1ky92mACIpm11IRHr6qzqaEPXdsIMZsunmUSaSbRcdvY/edit?gid=0#gid=0" target="_blank" class="footer-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        E-Document Jakon 2025
+    </a>
+    <span class="footer-copy">BPJS Ketenagakerjaan — Kantor Cabang Medan Kota</span>
+    <div class="footer-logos">
+        <img src="logo.png" alt="BPJS" onerror="this.style.display='none'">
+        <img src="medan.png" alt="Medan" onerror="this.style.display='none'">
+    </div>
+</footer>
+
+<!-- ===================== SCRIPTS ===================== */-->
+<script>
+// ===================== CONFIG =====================
+const SHEET_CONFIG = {
+    sheetId: "1y4wSY4XmaXP33zYPWnMN4oNo6rowPtDjeP_7sg-hwgc",
+    apiKey:  "AIzaSyDsmRcL_UOzyowHivqZPyo6QIUL6b_92wk",
+    range:   "Sheet1!A2:N1000"
+};
+
+const PALETTE = ['#1650a8','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#0891b2'];
+
+let chartStatus = null;
+let chartDana   = null;
+
+// ===================== INIT =====================
+document.addEventListener('DOMContentLoaded', async () => {
+    updateTimestamp();
+    setStatus('loading', 'Memuat data…');
+    document.getElementById('btnRefresh').addEventListener('click', refreshData);
+
+    await loadData();
+    setInterval(refreshData, 5 * 60 * 1000);
+});
+
+// ===================== DATA =====================
+async function loadData() {
+    try {
+        const data = await fetchSheets();
+        if (data && data.length > 0) {
+            renderDashboard(data);
+            setStatus('online', `${data.length} data dimuat`);
+            try { sessionStorage.setItem('projectData', JSON.stringify(data)); } catch(e) {}
+        } else {
+            setStatus('error', 'Data kosong');
+        }
+    } catch(e) {
+        console.error(e);
+        setStatus('error', 'Gagal memuat');
+        toast('Gagal mengambil data dari Google Sheets.');
+    }
+}
+
+async function fetchSheets() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_CONFIG.sheetId}/values/${SHEET_CONFIG.range}?key=${SHEET_CONFIG.apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.values || !json.values.length) return [];
+
+    return json.values.map((row, i) => {
+        const rawNilai = row[5] || '0';
+        const nilai    = parseCurrency(rawNilai);
+        return {
+            no:            row[0] || (i+1).toString(),
+            kodeRup:       row[1] || '',
+            kodeTender:    row[2] || '',
+            kodeProyek:    row[3] || '',
+            namaProyek:    row[4] || '',
+            nilaiProyek:   nilai,
+            sumberDana:    row[6] || 'Tidak Diketahui',
+            namaPemilik:   row[7] || 'Tidak Diketahui',
+            namaInstansi:  row[8] || 'Tidak Diketahui',
+            namaPelaksana: row[9] || '',
+            sumberPotensi: row[10] || '',
+            statusPotensi: row[11] || 'Tidak Diketahui',
+            tglSpmk:       row[12] || ''
+        };
+    }).filter(d => d.namaProyek && d.namaProyek.trim() !== '' && d.namaProyek !== 'Tidak Diketahui');
+}
+
+function parseCurrency(v) {
+    if (typeof v === 'number') return v;
+    return parseFloat(String(v).replace(/[^\d.-]/g, '')) || 0;
+}
+
+// ===================== IURAN TIERING =====================
+function computePotensiIuran(amount) {
+    const tiers = [
+        { cap: 100_000_000,   rate: 0.0024 },
+        { cap: 500_000_000,   rate: 0.0019 },
+        { cap: 1_000_000_000, rate: 0.0015 },
+        { cap: 5_000_000_000, rate: 0.0012 },
+        { cap: Infinity,      rate: 0.0010 }
+    ];
+    let premi = 0, prev = 0;
+    for (const t of tiers) {
+        const usable = Math.max(0, Math.min(amount, t.cap) - prev);
+        if (!usable) { prev = t.cap; continue; }
+        premi += usable * t.rate;
+        prev = t.cap;
+        if (prev >= amount) break;
+    }
+    return premi;
+}
+
+function fmt(n) {
+    return new Intl.NumberFormat('id-ID', { style:'currency', currency:'IDR', minimumFractionDigits:0, maximumFractionDigits:0 }).format(n);
+}
+
+function fmtShort(n) {
+    if (n >= 1e12) return (n/1e12).toFixed(1) + ' T';
+    if (n >= 1e9)  return (n/1e9).toFixed(1) + ' M';
+    if (n >= 1e6)  return (n/1e6).toFixed(1) + ' jt';
+    if (n >= 1e3)  return (n/1e3).toFixed(0) + ' rb';
+    return n.toString();
+}
+
+// ===================== RENDER =====================
+function renderDashboard(data) {
+    renderKPI(data);
+    renderStatusChart(data);
+    renderDanaChart(data);
+    renderTable(data);
+}
+
+function renderKPI(data) {
+    const total  = data.length;
+    const nilai  = data.reduce((s,d) => s + (d.nilaiProyek||0), 0);
+    const pot    = computePotensiIuran(nilai);
+    document.getElementById('totalProjects').textContent = total.toLocaleString('id-ID');
+    document.getElementById('totalValue').textContent    = fmt(nilai);
+    document.getElementById('potensiValue').textContent  = fmt(pot);
+}
+
+function normalizeStatus(s) {
+    const x = String(s ?? '').normalize('NFKC').trim().toUpperCase().replace(/\s+/g,' ');
+    if (['BELUM TL','BELUM_TL','BELUM-TL','TIDAK VALID','TIDAK_VALID','VALID'].includes(x)) return 'Belum Terdaftar';
+    if (x === 'TERDAFTAR') return 'Terdaftar';
+    return x.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function renderStatusChart(data) {
+    const counts = {}, potensis = {};
+    data.forEach(p => {
+        const s   = normalizeStatus(p.statusPotensi);
+        const pot = computePotensiIuran(Number(p.nilaiProyek)||0);
+        counts[s]   = (counts[s]   || 0) + 1;
+        potensis[s] = (potensis[s] || 0) + pot;
+    });
+
+    const labels   = Object.keys(counts);
+    const values   = labels.map(l => counts[l]);
+    const potArr   = labels.map(l => potensis[l]||0);
+    const totalPot = potArr.reduce((a,b)=>a+b,0);
+
+    const colorMap = { 'terdaftar':'#1650a8', 'belum terdaftar':'#ef4444' };
+    const colors   = labels.map(l => colorMap[l.toLowerCase()]||'#64748b');
+
+    document.getElementById('statusBadge').textContent = `${data.length} proyek`;
+
+    // legend
+    const leg = document.getElementById('statusLegend');
+    leg.innerHTML = '';
+    labels.forEach((lbl, i) => {
+        const pct = totalPot ? (potArr[i]/totalPot*100).toFixed(1) : 0;
+        const ac  = lbl.toLowerCase().includes('belum') ? 'red-accent' : 'blue-accent';
+        const item = document.createElement('div');
+        item.className = `legend-item ${ac}`;
+        item.innerHTML = `
+            <div class="legend-label">${lbl}</div>
+            <div class="legend-count">${values[i].toLocaleString('id-ID')}</div>
+            <div class="legend-iuran">${fmt(potArr[i])}</div>
+            <div class="legend-pct">${pct}%</div>
+        `;
+        item.onclick = () => window.location.href = `detail-status.html?status=${encodeURIComponent(lbl)}`;
+        leg.appendChild(item);
+    });
+
+    if (chartStatus) { chartStatus.destroy(); chartStatus = null; }
+    chartStatus = new Chart(document.getElementById('statusChart').getContext('2d'), {
+        type: 'doughnut',
+        data: { labels, datasets:[{ data:values, backgroundColor:colors, borderWidth:3, borderColor:'#fff', hoverBorderWidth:3 }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+                legend: { display:false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const i = ctx.dataIndex;
+                            const pct = totalPot ? (potArr[i]/totalPot*100).toFixed(1) : 0;
+                            return [`${ctx.label}: ${values[i]} proyek`, `Potensi: ${fmt(potArr[i])} (${pct}%)`];
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderDanaChart(data) {
+    const vals = {};
+    data.forEach(p => {
+        const s = p.sumberDana||'Tidak Diketahui';
+        vals[s] = (vals[s]||0) + (Number(p.nilaiProyek)||0);
+    });
+    const labels = Object.keys(vals);
+    const values = labels.map(l => vals[l]);
+    const total  = values.reduce((a,b)=>a+b,0);
+    const colors = labels.map((_,i) => PALETTE[i % PALETTE.length]);
+
+    document.getElementById('danaBadge').textContent = `${labels.length} sumber`;
+
+    const legAcs = ['blue-accent','cyan-accent','green-accent','amber-accent','red-accent'];
+    const leg = document.getElementById('danaLegend');
+    leg.innerHTML = '';
+    labels.forEach((lbl,i) => {
+        const pct = total ? (values[i]/total*100).toFixed(1) : 0;
+        const item = document.createElement('div');
+        item.className = `legend-item ${legAcs[i%legAcs.length]}`;
+        item.innerHTML = `
+            <div class="legend-label">${lbl}</div>
+            <div class="legend-iuran">${fmt(values[i])}</div>
+            <div class="legend-pct">${pct}%</div>
+        `;
+        leg.appendChild(item);
+    });
+
+    if (chartDana) { chartDana.destroy(); chartDana = null; }
+    chartDana = new Chart(document.getElementById('sumberDanaChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels, datasets:[{ data:values, backgroundColor:colors, borderRadius:6, borderSkipped:false }] },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { grid:{display:false}, ticks:{ font:{size:10}, maxRotation:30 } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color:'#f1f5f9' },
+                    ticks: {
+                        font:{size:10},
+                        callback: v => fmtShort(v)
+                    }
+                }
+            },
+            plugins: {
+                legend: { display:false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const v = Number(ctx.raw)||0;
+                            const pct = total ? (v/total*100).toFixed(1) : 0;
+                            return `${ctx.label}: ${fmt(v)} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTable(data) {
+    const counts = {}, totals = {};
+    data.forEach(p => {
+        const k = p.namaInstansi||'Tidak Diketahui';
+        counts[k] = (counts[k]||0) + 1;
+        totals[k] = (totals[k]||0) + (p.nilaiProyek||0);
+    });
+
+    const sorted = Object.keys(counts).sort((a,b) => counts[b]-counts[a]);
+    document.getElementById('tableBadge').textContent = `${sorted.length} instansi`;
+
+    const tbody = document.getElementById('mainTableBody');
+    tbody.innerHTML = '';
+    sorted.forEach((inst, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${i+1}</td>
+            <td>
+                <a href="detail.html?instansi=${encodeURIComponent(inst)}" class="instansi-name" title="${inst}">${inst}</a>
+                <div class="instansi-value">${fmt(totals[inst])}</div>
+            </td>
+            <td><span class="badge-count">${counts[inst]}</span></td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+// ===================== UI HELPERS =====================
+function setStatus(type, msg) {
+    const dot  = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    dot.className  = `status-dot ${type}`;
+    text.textContent = msg;
+}
+
+function updateTimestamp() {
+    const ts = document.getElementById('navTimestamp');
+    if (!ts) return;
+    const now = new Date();
+    ts.textContent = now.toLocaleString('id-ID', {
+        day:'2-digit', month:'short', year:'numeric',
+        hour:'2-digit', minute:'2-digit', hour12:false,
+        timeZone:'Asia/Jakarta'
+    });
+}
+
+function refreshData() {
+    setStatus('loading', 'Memuat ulang…');
+    updateTimestamp();
+    loadData();
+}
+
+function toast(msg) {
+    const el = document.createElement('div');
+    el.style.cssText = `position:fixed;top:80px;right:20px;background:#ef4444;color:#fff;padding:12px 18px;border-radius:10px;font-size:0.82rem;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);max-width:280px;`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+}
+</script>
+</body>
+</html>
